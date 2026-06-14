@@ -90,13 +90,16 @@ echo "[setup-hubs] $HUB_COUNT hub(s) を検出。$MCP_JSON を生成中..."
     if [ "$i" -eq 0 ]; then
       _name="agent-hub"
       _pat='${GITHUB_PAT}'
-      # AGENT_HUB_PARTICIPANT を優先し、deprecated alias の AGENT_HUB_USER に fallback する
-      _user='${AGENT_HUB_PARTICIPANT:-${AGENT_HUB_USER:-}}'
+      # X-Participant-Id は単純参照のみ。ネスト ${VAR:-${VAR2:-}} は Claude Code が
+      # 展開できずリテラル ${...} を送って handle regex で弾かれる (issue #41)。
+      # USER fallback の後方互換は .mcp.json でなく起動 env 側で AGENT_HUB_PARTICIPANT を保証する。
+      _user='${AGENT_HUB_PARTICIPANT}'
       _tenant='${AGENT_HUB_TENANT:-}'
     else
       _name="agent-hub-${n}"
       _pat="\${GITHUB_PAT_${n}:-\${GITHUB_PAT}}"
-      _user="\${AGENT_HUB_PARTICIPANT_${n}:-\${AGENT_HUB_PARTICIPANT:-\${AGENT_HUB_USER_${n}:-\${AGENT_HUB_USER:-}}}}"
+      # ネスト禁止。単一 :- まで (空 fallback) は可 (issue #41)。
+      _user="\${AGENT_HUB_PARTICIPANT_${n}:-}"
       _tenant="\${AGENT_HUB_TENANT_${n}:-}"
     fi
 
